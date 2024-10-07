@@ -1,0 +1,11 @@
+   <option value="DevOps">DevOps</option>
+                <option value="AI">AI</option>
+                <option value="IOT">IOT</option>
+                <option value="Machine Learning">Machine Learning</option>
+                <option value="Cybersecurity">Cybersecurity</option>
+                <option value="Cloud Computing">Cloud Computing</option>
+                <option value="Mobile app development">Mobile app development</option>
+                <option value="Data Science">Data Science</option>
+                <option value="UI/UX design">UI/UX design</option>
+                <option value="Blockchain">Blockchain</option>
+                <option value="Web Development">Web Development</option>

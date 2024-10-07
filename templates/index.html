@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Quiz & Recommendation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .question {
+            margin-bottom: 15px;
+        }
+
+        .question h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .options label {
+            display: block;
+            margin: 5px 0;
+        }
+
+        .recommendation {
+            margin-top: 20px;
+        }
+
+        .module-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .module-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Choose Your Course</h1>
+
+        <div id="course-section">
+            <select id="course-select">
+                <option value="DevOps">DevOps</option>
+                <option value="AI">AI</option>
+                <option value="IOT">IOT</option>
+                <option value="Machine Learning">Machine Learning</option>
+                <option value="Cybersecurity">Cybersecurity</option>
+                <option value="Cloud Computing">Cloud Computing</option>
+                <option value="Mobile App Development">Mobile App Development</option>
+                <option value="Data Science">Data Science</option>
+                <option value="UI/UX Design">UI/UX Design</option>
+                <option value="Blockchain">Blockchain</option>
+                <option value="Web Development">Web Development</option>
+            </select>
+            <button id="start-quiz">Start Quiz</button>
+        </div>
+
+        <div id="quiz-section" style="display: none;">
+            <h2 id="quiz-title">Quiz</h2>
+            <form id="quiz-form"></form>
+            <button id="submit-quiz">Submit Quiz</button>
+        </div>
+
+        <div id="recommendation-section" style="display: none;">
+            <h2>Recommended Modules</h2>
+            <div id="skill-level"></div>
+            <div id="score-display"></div>
+            <ul id="recommendation-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        let courseSelected = '';
+        let questions = [];
+
+        document.getElementById('start-quiz').addEventListener('click', function() {
+            courseSelected = document.getElementById('course-select').value;
+
+            fetch(`/get_questions?course=${courseSelected}`)
+                .then(response => response.json())
+                .then(data => {
+                    questions = data;
+                    document.getElementById('course-section').style.display = 'none';
+                    document.getElementById('quiz-section').style.display = 'block';
+
+                    const quizForm = document.getElementById('quiz-form');
+                    quizForm.innerHTML = '';
+                    questions.forEach((q, index) => {
+                        const questionHTML = `
+                            <div class="question">
+                                <h3>${q.question}</h3>
+                                <div class="options">
+                                    <label><input type="radio" name="question${index}" value="a"> ${q.options.a}</label>
+                                    <label><input type="radio" name="question${index}" value="b"> ${q.options.b}</label>
+                                    <label><input type="radio" name="question${index}" value="c"> ${q.options.c}</label>
+                                </div>
+                            </div>
+                        `;
+                        quizForm.innerHTML += questionHTML;
+                    });
+                });
+        });
+
+        document.getElementById('submit-quiz').addEventListener('click', function() {
+            const userAnswers = [];
+            questions.forEach((q, index) => {
+                const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
+                if (selectedOption) {
+                    userAnswers.push({
+                        question: q.question,
+                        user_option: selectedOption.value,
+                        correct_option: q.correct_option
+                    });
+                }
+            });
+
+            fetch('/submit_quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ course: courseSelected, answers: userAnswers })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide quiz and display results
+                document.getElementById('quiz-section').style.display = 'none';
+                document.getElementById('recommendation-section').style.display = 'block';
+
+                // Display skill level and score
+                document.getElementById('skill-level').innerText = `Skill Level: ${data.skill_level}`;
+                document.getElementById('score-display').innerText = `Score: ${data.score}`;
+
+                // Display recommended modules
+                const recommendationList = document.getElementById('recommendation-list');
+                recommendationList.innerHTML = ''; // Clear previous recommendations
+                if (data.recommended_modules.length > 0) {
+                    data.recommended_modules.forEach(module => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>Module:</strong> ${module.module_name} 
+                                        <span>- Difficulty: ${module.difficulty_level}</span>
+                                        <a href="${module.link}" target="_blank" class="module-link">Learn More</a>`;
+                        recommendationList.appendChild(li);
+                    });
+                } else {
+                    recommendationList.innerHTML = '<li>No modules found for your skill level.</li>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
